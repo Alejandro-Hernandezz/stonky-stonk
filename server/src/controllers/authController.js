@@ -47,36 +47,24 @@ class AuthController {
   }
 
   // RF01b - Verificar email
-  static async verifyEmail(req, res) {
-    try {
-      const { token } = req.params;
+static async verifyEmail(req, res) {
+  try {
+    const { token } = req.params;
 
-      const user = await User.verifyEmail(token);
+    const user = await User.verifyEmail(token);
 
-      if (!user) {
-        return res.status(400).json({
-          success: false,
-          message: 'Token de verificación inválido o expirado'
-        });
-      }
-
-      res.json({
-        success: true,
-        message: 'Correo verificado exitosamente. Ya puedes iniciar sesión.',
-        data: {
-          id: user.id,
-          email: user.email,
-          isVerified: user.is_verified
-        }
-      });
-    } catch (error) {
-      console.error('Error en verificación:', error);
-      res.status(500).json({
-        success: false,
-        message: 'Error al verificar correo'
-      });
+    if (!user) {
+      // Redirigir al frontend con error
+      return res.redirect(`${process.env.CLIENT_URL}/verification-failed`);
     }
+
+    // Redirigir al frontend con éxito
+    return res.redirect(`${process.env.CLIENT_URL}/verification-success`);
+  } catch (error) {
+    console.error('Error en verificación:', error);
+    return res.redirect(`${process.env.CLIENT_URL}/verification-error`);
   }
+}
 
   // RF01c - Login
   static async login(req, res) {

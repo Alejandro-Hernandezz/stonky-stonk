@@ -1,13 +1,15 @@
 import React, { useState, useEffect } from 'react';
+import VerificationSuccess from '../pages/VerificationSuccess.jsx';
+import VerificationFailed from '../pages/VerificationFailed.jsx';
 import { BrowserRouter, Routes, Route, useParams, useNavigate } from 'react-router-dom';
-import { 
-  DollarSign, 
-  TrendingUp, 
-  Target, 
-  FileText, 
-  Settings, 
-  LogOut, 
-  Eye, 
+import {
+  DollarSign,
+  TrendingUp,
+  Target,
+  FileText,
+  Settings,
+  LogOut,
+  Eye,
   EyeOff,
   Menu,
   X,
@@ -54,7 +56,7 @@ const VerifyEmail = () => {
         <div className="flex items-center justify-center mb-6">
           <DollarSign className="h-16 w-16 text-green-400" />
         </div>
-        
+
         <h1 className="text-3xl font-bold text-white mb-4">StonkyStonk</h1>
 
         {status === 'verifying' && (
@@ -86,7 +88,7 @@ const VerifyEmail = () => {
               <h2 className="text-2xl font-bold text-white mb-2">Error de Verificación</h2>
               <p className="text-red-300">{message}</p>
             </div>
-            <button 
+            <button
               onClick={() => navigate('/')}
               className="bg-gradient-to-r from-gray-600 to-gray-500 text-white py-3 px-8 rounded-lg hover:from-gray-500 hover:to-gray-400 transition-all font-semibold"
             >
@@ -118,7 +120,7 @@ const AppContent = () => {
     { id: 2, name: 'Fondo de Emergencia', target: 300000, current: 80000, deadline: '2024-12-31' }
   ]);
 
-  const balance = transactions.reduce((acc, t) => 
+  const balance = transactions.reduce((acc, t) =>
     t.type === 'income' ? acc + t.amount : acc - t.amount, 0
   );
 
@@ -171,17 +173,17 @@ const AppContent = () => {
       setLoading(true);
 
       try {
-        const endpoint = authMode === 'login' 
+        const endpoint = authMode === 'login'
           ? 'http://localhost:3000/api/auth/login'
           : 'http://localhost:3000/api/auth/register';
 
         const body = authMode === 'login'
           ? { email: formData.email.trim(), password: formData.password }
-          : { 
-              email: formData.email.trim(), 
-              password: formData.password,
-              confirmPassword: formData.confirmPassword 
-            };
+          : {
+            email: formData.email.trim(),
+            password: formData.password,
+            confirmPassword: formData.confirmPassword
+          };
 
         const response = await fetch(endpoint, {
           method: 'POST',
@@ -223,11 +225,10 @@ const AppContent = () => {
 
           <div className="flex mb-6 bg-gray-700 rounded-lg p-1">
             <button
-              className={`flex-1 py-2 px-4 rounded-md font-medium transition-all duration-200 ${
-                authMode === 'login' 
-                  ? 'bg-green-600 text-white shadow-lg' 
+              className={`flex-1 py-2 px-4 rounded-md font-medium transition-all duration-200 ${authMode === 'login'
+                  ? 'bg-green-600 text-white shadow-lg'
                   : 'text-gray-300 hover:text-white'
-              }`}
+                }`}
               onClick={() => {
                 setAuthMode('login');
                 setError('');
@@ -237,11 +238,10 @@ const AppContent = () => {
               Iniciar Sesión
             </button>
             <button
-              className={`flex-1 py-2 px-4 rounded-md font-medium transition-all duration-200 ${
-                authMode === 'register' 
-                  ? 'bg-green-600 text-white shadow-lg' 
+              className={`flex-1 py-2 px-4 rounded-md font-medium transition-all duration-200 ${authMode === 'register'
+                  ? 'bg-green-600 text-white shadow-lg'
                   : 'text-gray-300 hover:text-white'
-              }`}
+                }`}
               onClick={() => {
                 setAuthMode('register');
                 setError('');
@@ -265,12 +265,11 @@ const AppContent = () => {
               </label>
               <input
                 type="email"
-                className={`w-full px-4 py-3 bg-gray-700 border ${
-                  fieldErrors.email ? 'border-red-500' : 'border-gray-600'
-                } text-white rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200`}
+                className={`w-full px-4 py-3 bg-gray-700 border ${fieldErrors.email ? 'border-red-500' : 'border-gray-600'
+                  } text-white rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200`}
                 placeholder="tu@email.com"
                 value={formData.email}
-                onChange={(e) => setFormData({...formData, email: e.target.value})}
+                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                 disabled={loading}
               />
               {fieldErrors.email && (
@@ -285,12 +284,11 @@ const AppContent = () => {
               <div className="relative">
                 <input
                   type={showPassword ? "text" : "password"}
-                  className={`w-full px-4 py-3 bg-gray-700 border ${
-                    fieldErrors.password ? 'border-red-500' : 'border-gray-600'
-                  } text-white rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200 pr-12`}
+                  className={`w-full px-4 py-3 bg-gray-700 border ${fieldErrors.password ? 'border-red-500' : 'border-gray-600'
+                    } text-white rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200 pr-12`}
                   placeholder="••••••••"
                   value={formData.password}
-                  onChange={(e) => setFormData({...formData, password: e.target.value})}
+                  onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                   disabled={loading}
                 />
                 <button
@@ -313,12 +311,11 @@ const AppContent = () => {
                 </label>
                 <input
                   type="password"
-                  className={`w-full px-4 py-3 bg-gray-700 border ${
-                    fieldErrors.confirmPassword ? 'border-red-500' : 'border-gray-600'
-                  } text-white rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200`}
+                  className={`w-full px-4 py-3 bg-gray-700 border ${fieldErrors.confirmPassword ? 'border-red-500' : 'border-gray-600'
+                    } text-white rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200`}
                   placeholder="••••••••"
                   value={formData.confirmPassword}
-                  onChange={(e) => setFormData({...formData, confirmPassword: e.target.value})}
+                  onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
                   disabled={loading}
                 />
                 {fieldErrors.confirmPassword && (
@@ -332,8 +329,8 @@ const AppContent = () => {
               disabled={loading}
               className="w-full bg-gradient-to-r from-green-600 to-green-500 text-white py-3 px-6 rounded-lg hover:from-green-500 hover:to-green-400 transition-all duration-200 font-semibold shadow-lg transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
             >
-              {loading 
-                ? 'Procesando...' 
+              {loading
+                ? 'Procesando...'
                 : (authMode === 'login' ? 'Acceder a mi cuenta' : 'Crear cuenta')
               }
             </button>
@@ -379,15 +376,14 @@ const AppContent = () => {
     return (
       <div className="flex h-screen bg-gray-950">
         {sidebarOpen && (
-          <div 
+          <div
             className="fixed inset-0 bg-black bg-opacity-70 z-20 md:hidden"
             onClick={() => setSidebarOpen(false)}
           />
         )}
-        
-        <div className={`fixed left-0 top-0 h-full w-64 bg-gray-900 border-r border-gray-800 shadow-2xl transform transition-transform duration-300 ease-in-out z-30 ${
-          sidebarOpen ? 'translate-x-0' : '-translate-x-full'
-        } md:translate-x-0 md:static md:z-0`}>
+
+        <div className={`fixed left-0 top-0 h-full w-64 bg-gray-900 border-r border-gray-800 shadow-2xl transform transition-transform duration-300 ease-in-out z-30 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'
+          } md:translate-x-0 md:static md:z-0`}>
           <div className="p-6 border-b border-gray-800">
             <div className="flex items-center justify-between">
               <div className="flex items-center">
@@ -402,7 +398,7 @@ const AppContent = () => {
               </button>
             </div>
           </div>
-          
+
           <nav className="mt-6">
             {menuItems.map((item) => {
               const Icon = item.icon;
@@ -413,15 +409,13 @@ const AppContent = () => {
                     setCurrentView(item.id);
                     setSidebarOpen(false);
                   }}
-                  className={`w-full flex items-center px-6 py-4 text-left transition-all duration-200 group ${
-                    currentView === item.id 
-                      ? 'bg-green-800 text-green-100 border-r-4 border-green-400' 
+                  className={`w-full flex items-center px-6 py-4 text-left transition-all duration-200 group ${currentView === item.id
+                      ? 'bg-green-800 text-green-100 border-r-4 border-green-400'
                       : 'text-gray-300 hover:bg-gray-800 hover:text-white'
-                  }`}
+                    }`}
                 >
-                  <Icon className={`h-5 w-5 mr-4 transition-colors ${
-                    currentView === item.id ? 'text-green-400' : 'text-gray-400 group-hover:text-green-400'
-                  }`} />
+                  <Icon className={`h-5 w-5 mr-4 transition-colors ${currentView === item.id ? 'text-green-400' : 'text-gray-400 group-hover:text-green-400'
+                    }`} />
                   <span className="font-medium">{item.label}</span>
                 </button>
               );
@@ -524,10 +518,9 @@ const AppContent = () => {
           {transactions.slice(0, 5).map((transaction) => (
             <div key={transaction.id} className="flex items-center justify-between py-4 px-6 bg-gray-800 border border-gray-700 rounded-xl hover:bg-gray-750 transition-colors">
               <div className="flex items-center">
-                <div className={`p-2 rounded-full mr-4 ${
-                  transaction.type === 'income' ? 'bg-green-500' : 'bg-red-500'
-                }`}>
-                  {transaction.type === 'income' 
+                <div className={`p-2 rounded-full mr-4 ${transaction.type === 'income' ? 'bg-green-500' : 'bg-red-500'
+                  }`}>
+                  {transaction.type === 'income'
                     ? <ArrowUpCircle className="h-5 w-5 text-white" />
                     : <ArrowDownCircle className="h-5 w-5 text-white" />
                   }
@@ -538,9 +531,8 @@ const AppContent = () => {
                 </div>
               </div>
               <div className="text-right">
-                <p className={`font-bold text-xl ${
-                  transaction.type === 'income' ? 'text-green-400' : 'text-red-400'
-                }`}>
+                <p className={`font-bold text-xl ${transaction.type === 'income' ? 'text-green-400' : 'text-red-400'
+                  }`}>
                   {transaction.type === 'income' ? '+' : '-'}${transaction.amount.toLocaleString('es-CL')}
                 </p>
                 <p className="text-gray-500">{transaction.date}</p>
@@ -591,6 +583,8 @@ const App = () => {
       <Routes>
         <Route path="/" element={<AppContent />} />
         <Route path="/verify-email/:token" element={<VerifyEmail />} />
+        <Route path="/verification-success" element={<VerificationSuccess />} />
+        <Route path="/verification-failed" element={<VerificationFailed />} />
       </Routes>
     </BrowserRouter>
   );
