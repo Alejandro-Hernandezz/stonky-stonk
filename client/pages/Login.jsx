@@ -11,19 +11,60 @@ export default function Login() {
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [fieldErrors, setFieldErrors] = useState({});
 
   const handleChange = (e) => {
+    const { id, value } = e.target;
     setFormData({
       ...formData,
-      [e.target.id]: e.target.value
+      [id]: value
     });
-    // Limpiar error al escribir
+    
+    // Limpiar errores
+    if (fieldErrors[id]) {
+      setFieldErrors({ ...fieldErrors, [id]: '' });
+    }
     if (error) setError('');
+  };
+
+  const validateForm = () => {
+    const errors = {};
+
+    // Validar email
+    const emailValue = formData.email.trim();
+    if (!emailValue) {
+      errors.email = 'El correo electrónico es requerido';
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailValue)) {
+      errors.email = 'Ingresa un correo electrónico válido';
+    }
+
+    // Validar contraseña
+    if (!formData.password) {
+      errors.password = 'La contraseña es requerida';
+    } else if (formData.password.length < 8) {
+      errors.password = 'La contraseña debe tener al menos 8 caracteres';
+    }
+
+    setFieldErrors(errors);
+    return Object.keys(errors).length === 0;
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    e.stopPropagation();
+    
+    console.log('Formulario enviado'); // Debug
+    console.log('Datos:', formData); // Debug
+    
     setError('');
+    setFieldErrors({});
+
+    // Validar antes de continuar
+    if (!validateForm()) {
+      console.log('Validación falló'); // Debug
+      return false;
+    }
+
     setLoading(true);
 
     try {
@@ -32,7 +73,10 @@ export default function Login() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({
+          email: formData.email.trim(),
+          password: formData.password
+        }),
       });
 
       const data = await response.json();
@@ -41,11 +85,9 @@ export default function Login() {
         throw new Error(data.message || 'Error al iniciar sesión');
       }
 
-      // Guardar token en localStorage
       localStorage.setItem('token', data.data.token);
       localStorage.setItem('user', JSON.stringify(data.data.user));
 
-      // Redirigir al dashboard
       navigate('/dashboard');
     } catch (err) {
       setError(err.message);
@@ -63,7 +105,7 @@ export default function Login() {
         </div>
 
         <Card>
-          <form onSubmit={handleSubmit} className="space-y-6">
+          <form onSubmit={handleSubmit} className="space-y-6" noValidate>
             {error && (
               <Alert color="failure" icon={HiInformationCircle}>
                 <span className="font-medium">Error: </span>
@@ -72,7 +114,9 @@ export default function Login() {
             )}
 
             <div>
-              <Label htmlFor="email" value="Correo electrónico" />
+              <div className="mb-2 block">
+                <Label htmlFor="email" value="Correo electrónico" />
+              </div>
               <TextInput
                 id="email"
                 type="email"
@@ -80,13 +124,18 @@ export default function Login() {
                 placeholder="nombre@ejemplo.com"
                 value={formData.email}
                 onChange={handleChange}
-                required
                 disabled={loading}
+                color={fieldErrors.email ? 'failure' : undefined}
               />
+              {fieldErrors.email && (
+                <p className="mt-1 text-sm text-red-600">{fieldErrors.email}</p>
+              )}
             </div>
 
             <div>
-              <Label htmlFor="password" value="Contraseña" />
+              <div className="mb-2 block">
+                <Label htmlFor="password" value="Contraseña" />
+              </div>
               <TextInput
                 id="password"
                 type="password"
@@ -94,9 +143,12 @@ export default function Login() {
                 placeholder="••••••••"
                 value={formData.password}
                 onChange={handleChange}
-                required
                 disabled={loading}
+                color={fieldErrors.password ? 'failure' : undefined}
               />
+              {fieldErrors.password && (
+                <p className="mt-1 text-sm text-red-600">{fieldErrors.password}</p>
+              )}
             </div>
 
             <div className="flex items-center justify-between">
@@ -110,7 +162,8 @@ export default function Login() {
 
             <Button 
               type="submit" 
-              className="w-full bg-blue-600 hover:bg-blue-700"
+              className="w-full"
+              color="blue"
               disabled={loading}
             >
               {loading ? 'Iniciando sesión...' : 'Iniciar sesión'}

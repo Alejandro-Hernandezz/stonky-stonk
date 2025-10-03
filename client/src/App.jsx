@@ -1,11 +1,9 @@
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { BrowserRouter, Routes, Route, useParams, useNavigate } from 'react-router-dom';
 import { 
   DollarSign, 
-  PlusCircle, 
   TrendingUp, 
   Target, 
-  PieChart, 
   FileText, 
   Settings, 
   LogOut, 
@@ -14,23 +12,101 @@ import {
   Menu,
   X,
   BarChart3,
-  AlertTriangle,
-  Calendar,
-  Filter,
   ArrowUpCircle,
   ArrowDownCircle,
   Wallet,
   CreditCard
 } from 'lucide-react';
 
-const App = () => {
+// COMPONENTE DE VERIFICACIÓN DE EMAIL
+const VerifyEmail = () => {
+  const { token } = useParams();
+  const navigate = useNavigate();
+  const [status, setStatus] = useState('verifying');
+  const [message, setMessage] = useState('');
+
+  useEffect(() => {
+    const verifyEmail = async () => {
+      try {
+        const response = await fetch(`http://localhost:3000/api/auth/verify-email/${token}`);
+        const data = await response.json();
+
+        if (response.ok) {
+          setStatus('success');
+          setMessage(data.message);
+          setTimeout(() => navigate('/'), 3000);
+        } else {
+          setStatus('error');
+          setMessage(data.message || 'Token inválido o expirado');
+        }
+      } catch (error) {
+        setStatus('error');
+        setMessage('Error al verificar el correo');
+      }
+    };
+
+    if (token) verifyEmail();
+  }, [token, navigate]);
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-green-900 to-black flex items-center justify-center p-4">
+      <div className="max-w-md w-full bg-gray-800 border border-green-700 rounded-2xl shadow-2xl p-8 text-center">
+        <div className="flex items-center justify-center mb-6">
+          <DollarSign className="h-16 w-16 text-green-400" />
+        </div>
+        
+        <h1 className="text-3xl font-bold text-white mb-4">StonkyStonk</h1>
+
+        {status === 'verifying' && (
+          <div>
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-400 mx-auto mb-4"></div>
+            <p className="text-green-300 text-lg">Verificando tu correo...</p>
+          </div>
+        )}
+
+        {status === 'success' && (
+          <div>
+            <div className="bg-green-900/50 border border-green-700 rounded-lg p-6 mb-6">
+              <svg className="w-16 h-16 text-green-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <h2 className="text-2xl font-bold text-white mb-2">¡Correo Verificado!</h2>
+              <p className="text-green-300">{message}</p>
+            </div>
+            <p className="text-gray-400 mb-4">Redirigiendo al login...</p>
+          </div>
+        )}
+
+        {status === 'error' && (
+          <div>
+            <div className="bg-red-900/50 border border-red-700 rounded-lg p-6 mb-6">
+              <svg className="w-16 h-16 text-red-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <h2 className="text-2xl font-bold text-white mb-2">Error de Verificación</h2>
+              <p className="text-red-300">{message}</p>
+            </div>
+            <button 
+              onClick={() => navigate('/')}
+              className="bg-gradient-to-r from-gray-600 to-gray-500 text-white py-3 px-8 rounded-lg hover:from-gray-500 hover:to-gray-400 transition-all font-semibold"
+            >
+              Volver al Login
+            </button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+// COMPONENTE PRINCIPAL DE LA APP
+const AppContent = () => {
   const [currentView, setCurrentView] = useState('dashboard');
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [authMode, setAuthMode] = useState('login');
   const [showPassword, setShowPassword] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
-  // Simulación de datos
   const [transactions, setTransactions] = useState([
     { id: 1, type: 'expense', amount: 45000, description: 'Supermercado', category: 'Alimentación', date: '2024-01-15' },
     { id: 2, type: 'income', amount: 150000, description: 'Salario', category: 'Trabajo', date: '2024-01-01' },
@@ -42,30 +118,96 @@ const App = () => {
     { id: 2, name: 'Fondo de Emergencia', target: 300000, current: 80000, deadline: '2024-12-31' }
   ]);
 
-  const [budget, setBudget] = useState({
-    total: 200000,
-    categories: {
-      'Alimentación': { budget: 80000, spent: 45000 },
-      'Transporte': { budget: 40000, spent: 12000 },
-      'Entretenimiento': { budget: 30000, spent: 8000 }
-    }
-  });
-
   const balance = transactions.reduce((acc, t) => 
     t.type === 'income' ? acc + t.amount : acc - t.amount, 0
   );
 
-  // Componente de Autenticación
+  // COMPONENTE DE AUTENTICACIÓN
   const AuthComponent = () => {
     const [formData, setFormData] = useState({
       email: '',
       password: '',
       confirmPassword: ''
     });
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState('');
+    const [fieldErrors, setFieldErrors] = useState({});
 
-    const handleSubmit = (e) => {
+    const validateForm = () => {
+      const errors = {};
+      const emailValue = formData.email.trim();
+
+      if (!emailValue) {
+        errors.email = 'El correo electrónico es requerido';
+      } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailValue)) {
+        errors.email = 'Ingresa un correo electrónico válido';
+      }
+
+      if (!formData.password) {
+        errors.password = 'La contraseña es requerida';
+      } else if (formData.password.length < 8) {
+        errors.password = 'La contraseña debe tener al menos 8 caracteres';
+      }
+
+      if (authMode === 'register') {
+        if (!formData.confirmPassword) {
+          errors.confirmPassword = 'Debes confirmar tu contraseña';
+        } else if (formData.password !== formData.confirmPassword) {
+          errors.confirmPassword = 'Las contraseñas no coinciden';
+        }
+      }
+
+      setFieldErrors(errors);
+      return Object.keys(errors).length === 0;
+    };
+
+    const handleSubmit = async (e) => {
       e.preventDefault();
-      setIsAuthenticated(true);
+      setError('');
+      setFieldErrors({});
+
+      if (!validateForm()) return;
+
+      setLoading(true);
+
+      try {
+        const endpoint = authMode === 'login' 
+          ? 'http://localhost:3000/api/auth/login'
+          : 'http://localhost:3000/api/auth/register';
+
+        const body = authMode === 'login'
+          ? { email: formData.email.trim(), password: formData.password }
+          : { 
+              email: formData.email.trim(), 
+              password: formData.password,
+              confirmPassword: formData.confirmPassword 
+            };
+
+        const response = await fetch(endpoint, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body),
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) throw new Error(data.message || 'Error en la operación');
+
+        if (authMode === 'login') {
+          localStorage.setItem('token', data.data.token);
+          localStorage.setItem('user', JSON.stringify(data.data.user));
+          setIsAuthenticated(true);
+        } else {
+          setError('');
+          alert('Registro exitoso. Por favor verifica tu correo electrónico.');
+          setAuthMode('login');
+          setFormData({ email: '', password: '', confirmPassword: '' });
+        }
+      } catch (err) {
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
     };
 
     return (
@@ -86,7 +228,11 @@ const App = () => {
                   ? 'bg-green-600 text-white shadow-lg' 
                   : 'text-gray-300 hover:text-white'
               }`}
-              onClick={() => setAuthMode('login')}
+              onClick={() => {
+                setAuthMode('login');
+                setError('');
+                setFieldErrors({});
+              }}
             >
               Iniciar Sesión
             </button>
@@ -96,25 +242,40 @@ const App = () => {
                   ? 'bg-green-600 text-white shadow-lg' 
                   : 'text-gray-300 hover:text-white'
               }`}
-              onClick={() => setAuthMode('register')}
+              onClick={() => {
+                setAuthMode('register');
+                setError('');
+                setFieldErrors({});
+              }}
             >
               Registrarse
             </button>
           </div>
 
-          <div className="space-y-4">
+          {error && (
+            <div className="mb-4 p-3 bg-red-900/50 border border-red-700 rounded-lg">
+              <p className="text-red-200 text-sm">{error}</p>
+            </div>
+          )}
+
+          <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-green-300 mb-2">
                 Correo Electrónico
               </label>
               <input
                 type="email"
-                className="w-full px-4 py-3 bg-gray-700 border border-gray-600 text-white rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200"
+                className={`w-full px-4 py-3 bg-gray-700 border ${
+                  fieldErrors.email ? 'border-red-500' : 'border-gray-600'
+                } text-white rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200`}
                 placeholder="tu@email.com"
                 value={formData.email}
                 onChange={(e) => setFormData({...formData, email: e.target.value})}
-                required
+                disabled={loading}
               />
+              {fieldErrors.email && (
+                <p className="mt-1 text-sm text-red-400">{fieldErrors.email}</p>
+              )}
             </div>
 
             <div>
@@ -124,11 +285,13 @@ const App = () => {
               <div className="relative">
                 <input
                   type={showPassword ? "text" : "password"}
-                  className="w-full px-4 py-3 bg-gray-700 border border-gray-600 text-white rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200 pr-12"
+                  className={`w-full px-4 py-3 bg-gray-700 border ${
+                    fieldErrors.password ? 'border-red-500' : 'border-gray-600'
+                  } text-white rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200 pr-12`}
                   placeholder="••••••••"
                   value={formData.password}
                   onChange={(e) => setFormData({...formData, password: e.target.value})}
-                  required
+                  disabled={loading}
                 />
                 <button
                   type="button"
@@ -138,6 +301,9 @@ const App = () => {
                   {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
                 </button>
               </div>
+              {fieldErrors.password && (
+                <p className="mt-1 text-sm text-red-400">{fieldErrors.password}</p>
+              )}
             </div>
 
             {authMode === 'register' && (
@@ -147,22 +313,31 @@ const App = () => {
                 </label>
                 <input
                   type="password"
-                  className="w-full px-4 py-3 bg-gray-700 border border-gray-600 text-white rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200"
+                  className={`w-full px-4 py-3 bg-gray-700 border ${
+                    fieldErrors.confirmPassword ? 'border-red-500' : 'border-gray-600'
+                  } text-white rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200`}
                   placeholder="••••••••"
                   value={formData.confirmPassword}
                   onChange={(e) => setFormData({...formData, confirmPassword: e.target.value})}
-                  required
+                  disabled={loading}
                 />
+                {fieldErrors.confirmPassword && (
+                  <p className="mt-1 text-sm text-red-400">{fieldErrors.confirmPassword}</p>
+                )}
               </div>
             )}
 
             <button
-              onClick={handleSubmit}
-              className="w-full bg-gradient-to-r from-green-600 to-green-500 text-white py-3 px-6 rounded-lg hover:from-green-500 hover:to-green-400 transition-all duration-200 font-semibold shadow-lg transform hover:scale-105"
+              type="submit"
+              disabled={loading}
+              className="w-full bg-gradient-to-r from-green-600 to-green-500 text-white py-3 px-6 rounded-lg hover:from-green-500 hover:to-green-400 transition-all duration-200 font-semibold shadow-lg transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
             >
-              {authMode === 'login' ? 'Acceder a mi cuenta' : 'Crear cuenta'}
+              {loading 
+                ? 'Procesando...' 
+                : (authMode === 'login' ? 'Acceder a mi cuenta' : 'Crear cuenta')
+              }
             </button>
-          </div>
+          </form>
 
           {authMode === 'login' && (
             <div className="text-center mt-6">
@@ -176,7 +351,7 @@ const App = () => {
     );
   };
 
-  // Componente de Layout Principal
+  // LAYOUT PRINCIPAL
   const MainLayout = ({ children }) => {
     const menuItems = [
       { id: 'dashboard', label: 'Dashboard', icon: BarChart3 },
@@ -203,7 +378,6 @@ const App = () => {
 
     return (
       <div className="flex h-screen bg-gray-950">
-        {/* Sidebar */}
         {sidebarOpen && (
           <div 
             className="fixed inset-0 bg-black bg-opacity-70 z-20 md:hidden"
@@ -265,9 +439,7 @@ const App = () => {
           </div>
         </div>
 
-        {/* Contenido principal */}
         <div className="flex-1 flex flex-col overflow-hidden">
-          {/* Header */}
           <header className="bg-gray-900 border-b border-gray-800 shadow-2xl px-4 md:px-8 py-6">
             <div className="flex items-center justify-between">
               <div className="flex items-center">
@@ -293,7 +465,6 @@ const App = () => {
             </div>
           </header>
 
-          {/* Main content */}
           <main className="flex-1 overflow-auto bg-gray-950 p-4 md:p-8">
             {children}
           </main>
@@ -302,10 +473,9 @@ const App = () => {
     );
   };
 
-  // Páginas
+  // DASHBOARD
   const Dashboard = () => (
     <div className="space-y-8">
-      {/* Balance y resumen rápido */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="bg-gradient-to-br from-gray-900 to-gray-800 border border-gray-700 rounded-2xl shadow-xl p-6">
           <div className="flex items-center">
@@ -348,7 +518,6 @@ const App = () => {
         </div>
       </div>
 
-      {/* Transacciones recientes */}
       <div className="bg-gray-900 border border-gray-700 rounded-2xl shadow-xl p-8">
         <h3 className="text-2xl font-bold text-white mb-6">Transacciones Recientes</h3>
         <div className="space-y-4">
@@ -411,14 +580,19 @@ const App = () => {
     }
   };
 
-  if (!isAuthenticated) {
-    return <AuthComponent />;
-  }
+  if (!isAuthenticated) return <AuthComponent />;
+  return <MainLayout>{renderContent()}</MainLayout>;
+};
 
+// COMPONENTE PRINCIPAL CON RUTAS
+const App = () => {
   return (
-    <MainLayout>
-      {renderContent()}
-    </MainLayout>
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<AppContent />} />
+        <Route path="/verify-email/:token" element={<VerifyEmail />} />
+      </Routes>
+    </BrowserRouter>
   );
 };
 
